@@ -1,0 +1,19 @@
+doctype html
+doctype html
+html(lang="en")
+    head
+        title Update contact info
+        link(rel="stylesheet", href="/css/style.css")
+    body 
+    .form-wrapper 
+    p First name: #{first_name}
+    p Last name #{last_name}
+    p Document ID #{document_id}
+    form(method="POST")
+    label(for="newFirstName") New first name 
+    input(type="text", name="newFirstName" required)
+    label(for="newLastName") New last name 
+    input(type="text", name="newLastName" required)
+    label(for="newDocument") New document ID 
+    input(type="text", name="newDocument" required)
+    input(type="submit", name="Submit")
