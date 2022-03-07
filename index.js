@@ -1,28 +1,94 @@
 const express = require("express");
 const axios = require("axios");
-
 const app = express();
 
-// app.set('view engine', 'pug');
-// app.use(express.static(__dirname + '/public'));
 
-//API KEY PRUEBA
-const API_KEY = "2017838c-4ff6-47bd-975e-d14acdadb011";
+app.use(express.static(__dirname + '/public'));
 
-//Get table "Back-End Developer Test 5"
+const hubspot = require("@hubspot/api-client");
+const hubspotClient = new hubspot.Client({
+  apiKey: "a011e7ae-6db8-431b-804a-0f9449a9a6c9",
+});
+const tableId = 5319978;
+
+//Get rows of table developer_5
 app.get("/contacts", async (req, res) => {
-  const contacts = `https://api.hubapi.com/cms/v3/hubdb/tables/5319978?hapikey=${API_KEY}`;
-  const headers = {
-    Authorization: `Bearer ${API_KEY}`,
-    "Content-type": "application/json",
-  };
   try {
-    const resp = await axios.get(contacts, { headers });
-    const data = resp.data;
-    res.json(data);
-    //res.render('contacts', { title: 'Contacts | HubSpot APIs', data });
+    const apiResponse = await hubspotClient.cms.hubdb.rowsApi.getTableRows(
+      tableId
+    );
+    res.send(apiResponse);
+  } catch (err) {
+    res.send(err);
+  }
+});
+
+//Get contact by Id
+app.get("/contacts/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const apiResponse = await hubspotClient.cms.hubdb.rowsApi.getTableRow(
+      tableId,
+      id
+    );
+    res.send(apiResponse.values);
+  } catch (err) {
+    res.send(err);
+  }
+});
+
+//Get draft with changes
+app.get("/draft", async (req, res) => {
+  
+    const apiResponse = await hubspotClient.cms.hubdb.rowsApi.readDraftTableRows(tableId)   
+    console.log(apiResponse)
+    res.send(apiResponse);
+  
+});
+
+// //POST Create a new row
+app.post("/contacts", (req, res) => {
+      
+  const values = req.body
+  
+  try {
+    hubspotClient.cms.hubdb.rowsApi.createTableRow(tableId,values)
+    hubspotClient.cms.hubdb.tablesApi.publishDraftTable(tableId);
+    res.send("The contact has been added successfully");
+  } catch (err) {
+    res.send(err);
+  }
+});
+
+//update
+app.put('/contacts/:id', async (request,response)  => {
+
+    const id =request.params.id
+    const values=request.body
+
+    try {
+        const apiResponse = await hubspotClient.cms.hubdb.rowsApi.updateDraftTableRow(tableId,id,values)
+        hubspotClient.cms.hubdb.tablesApi.publishDraftTable(tableId)
+        response.send("The contact has been updated successfully")
+        } catch (error) {
+        response.send(error)
+    
+        }
+});
+
+//delete rows
+app.delete("/contacts/:id", async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const apiResponse = await hubspotClient.cms.hubdb.rowsApi.purgeDraftTableRow(
+      tableId,
+      id
+    );
+    hubspotClient.cms.hubdb.tablesApi.publishDraftTable(tableId);
+    res.send("The contact has been deleted successfully");
   } catch (error) {
-    console.error(error);
+    res.send(error);
   }
 });
 
